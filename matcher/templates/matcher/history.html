@@ -1,0 +1,105 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume History | AI Resume Matcher</title>
+    <link rel="stylesheet" href="{% static 'matcher/style.css' %}">
+</head>
+<body>
+<header class="navbar">
+    <a class="brand" href="{% url 'home' %}">AI Resume Matcher</a>
+    <nav class="nav-links">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'job_applications' %}">Job Tracker</a>
+        <a class="active" href="{% url 'history' %}">Resume History</a>
+        <a href="{% url 'compare_jobs' %}">Compare Jobs</a>
+        <form method="post" action="{% url 'logout' %}" class="nav-form">
+            {% csrf_token %}
+            <button type="submit" class="btn-danger">Logout</button>
+        </form>
+    </nav>
+</header>
+
+<main class="container">
+    <section class="page-heading">
+        <div>
+            <p class="eyebrow">YOUR PREVIOUS ANALYSES</p>
+            <h1>Resume History</h1>
+            <p>Review your previous resume analyses and download reports.</p>
+        </div>
+        <a class="btn" href="{% url 'home' %}">+ Analyze Resume</a>
+    </section>
+
+    {% if analyses %}
+        <div class="history-list">
+            {% for analysis in analyses %}
+                <article class="card history-card">
+                    <div class="history-top">
+                        <div class="file-avatar">PDF</div>
+                        <div class="history-title">
+                            <h2>{{ analysis.resume_name }}</h2>
+                            <p>Analyzed {{ analysis.created_at|date:"d M Y, h:i A" }}</p>
+                        </div>
+                        <div class="history-score">
+                            <strong>{{ analysis.match_score }}%</strong>
+                            <span>Match score</span>
+                        </div>
+                    </div>
+
+                    <div class="score-bar">
+                        <div class="score-fill"
+                             style="width: {% if analysis.match_score > 100 %}100{% else %}{{ analysis.match_score }}{% endif %}%;">
+                        </div>
+                    </div>
+
+                    <div class="history-details">
+                        <div>
+                            <h3>Matching Skills</h3>
+                            {% if analysis.matched_skills %}
+                                <p>{{ analysis.matched_skills }}</p>
+                            {% else %}
+                                <p>No matching skills recorded.</p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <h3>Skills to Develop</h3>
+                            {% if analysis.missing_skills %}
+                                <p>{{ analysis.missing_skills }}</p>
+                            {% else %}
+                                <p>No missing skills recorded.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <details>
+                        <summary>View job description</summary>
+                        <p>{{ analysis.job_description|linebreaksbr }}</p>
+                    </details>
+
+                    <div class="report-actions">
+                        <a class="btn"
+                           href="{% url 'download_report' analysis.id %}">
+                            Download TXT Report
+                        </a>
+                        <a class="btn btn-secondary"
+                           href="{% url 'download_pdf_report' analysis.id %}">
+                            Download PDF Report
+                        </a>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <section class="card empty-state">
+            <span class="empty-icon">▤</span>
+            <h2>No resume history yet</h2>
+            <p>When you analyze a resume while logged in, your analysis will appear here.</p>
+            <a class="btn" href="{% url 'home' %}">Analyze Your First Resume</a>
+        </section>
+    {% endif %}
+</main>
+</body>
+</html>

@@ -1,0 +1,254 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | AI Resume Matcher</title>
+    <link rel="stylesheet" href="{% static 'matcher/style.css' %}">
+</head>
+<body>
+<header class="navbar">
+    <a class="brand" href="{% url 'home' %}">AI Resume Matcher</a>
+    <nav class="nav-links">
+        <a class="active" href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'job_applications' %}">Job Tracker</a>
+        <a href="{% url 'history' %}">Resume History</a>
+        <a href="{% url 'compare_jobs' %}">Compare Jobs</a>
+        <form method="post" action="{% url 'logout' %}" class="nav-form">
+            {% csrf_token %}
+            <button type="submit" class="btn-danger">Logout</button>
+        </form>
+    </nav>
+</header>
+
+<main class="container">
+    <section class="page-heading">
+        <div>
+            <p class="eyebrow">YOUR JOB SEARCH OVERVIEW</p>
+            <h1>Dashboard</h1>
+            <p>Welcome back, {{ request.user.username }}. Here's how your job search is progressing.</p>
+        </div>
+        <a class="btn" href="{% url 'job_applications' %}">+ Add an application</a>
+    </section>
+
+    <section class="stats-grid" aria-label="Application statistics">
+        <article class="stat-card stat-primary">
+            <span class="stat-icon">▦</span>
+            <p class="stat-label">Total Applications</p>
+            <p class="stat-value">{{ total_applications }}</p>
+        </article>
+
+        <article class="stat-card">
+            <span class="stat-icon">☆</span>
+            <p class="stat-label">Saved</p>
+            <p class="stat-value">{{ saved_count }}</p>
+        </article>
+
+        <article class="stat-card">
+            <span class="stat-icon">↗</span>
+            <p class="stat-label">Applied</p>
+            <p class="stat-value">{{ applied_count }}</p>
+        </article>
+
+        <article class="stat-card">
+            <span class="stat-icon">◷</span>
+            <p class="stat-label">Interviews</p>
+            <p class="stat-value">{{ interview_count }}</p>
+        </article>
+
+        <article class="stat-card">
+            <span class="stat-icon">✓</span>
+            <p class="stat-label">Offers Received</p>
+            <p class="stat-value">{{ offer_count }}</p>
+        </article>
+
+        <article class="stat-card">
+            <span class="stat-icon">—</span>
+            <p class="stat-label">Rejected</p>
+            <p class="stat-value">{{ rejected_count }}</p>
+        </article>
+    </section>
+
+    <section class="content-grid">
+        <article class="card chart-card">
+            <div class="section-heading">
+                <div>
+                    <h2>Application Status</h2>
+                    <p>A breakdown of your current applications.</p>
+                </div>
+            </div>
+
+            {% if total_applications %}
+                <div class="chart-wrap">
+                    <canvas id="applicationChart"
+                            aria-label="Application status doughnut chart"></canvas>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <span class="empty-icon">◌</span>
+                    <h3>Your chart will appear here</h3>
+                    <p>Add a job application to see your progress.</p>
+                    <a href="{% url 'job_applications' %}" class="text-link">
+                        Add your first job →
+                    </a>
+                </div>
+            {% endif %}
+        </article>
+
+        <article class="card quick-actions">
+            <h2>Quick Actions</h2>
+            <p>Keep your job search organized.</p>
+
+            <a class="action-link" href="{% url 'home' %}">
+                <span class="action-symbol">✦</span>
+                <span>
+                    <strong>Analyze a resume</strong>
+                    <small>Match a resume to a job description</small>
+                </span>
+                <span>→</span>
+            </a>
+
+            <a class="action-link" href="{% url 'job_applications' %}">
+                <span class="action-symbol">▤</span>
+                <span>
+                    <strong>Track an application</strong>
+                    <small>Save a job or update its status</small>
+                </span>
+                <span>→</span>
+            </a>
+
+            <a class="action-link" href="{% url 'compare_jobs' %}">
+                <span class="action-symbol">⇄</span>
+                <span>
+                    <strong>Compare two jobs</strong>
+                    <small>See which role fits your resume better</small>
+                </span>
+                <span>→</span>
+            </a>
+        </article>
+    </section>
+
+    <section class="card table-card">
+        <div class="section-heading">
+            <div>
+                <h2>Recent Applications</h2>
+                <p>Your five most recently added job applications.</p>
+            </div>
+            <a href="{% url 'job_applications' %}" class="text-link">View all →</a>
+        </div>
+
+        {% if recent_applications %}
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Company</th>
+                            <th>Job Title</th>
+                            <th>Status</th>
+                            <th>Applied Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for application in recent_applications %}
+                            <tr>
+                                <td class="company-cell">
+                                    {{ application.company_name }}
+                                </td>
+                                <td>
+                                    {% if application.job_url %}
+                                        <a href="{{ application.job_url }}"
+                                           target="_blank"
+                                           rel="noopener noreferrer">
+                                            {{ application.job_title }}
+                                        </a>
+                                    {% else %}
+                                        {{ application.job_title }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="status-badge status-{{ application.status }}">
+                                        {{ application.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {{ application.applied_date|date:"d M Y"|default:"—" }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state compact">
+                <h3>No applications yet</h3>
+                <p>Your recent job applications will show up here.</p>
+                <a class="btn" href="{% url 'job_applications' %}">
+                    Add your first application
+                </a>
+            </div>
+        {% endif %}
+    </section>
+</main>
+
+{% if total_applications %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+(function () {
+    const canvas = document.getElementById("applicationChart");
+
+    if (!canvas || typeof Chart === "undefined") {
+        return;
+    }
+
+    new Chart(canvas, {
+        type: "doughnut",
+        data: {
+            labels: [
+                "Saved",
+                "Applied",
+                "Interviews",
+                "Rejected",
+                "Offers Received"
+            ],
+            datasets: [{
+                data: [
+                    {{ saved_count|default:0 }},
+                    {{ applied_count|default:0 }},
+                    {{ interview_count|default:0 }},
+                    {{ rejected_count|default:0 }},
+                    {{ offer_count|default:0 }}
+                ],
+                backgroundColor: [
+                    "#94a3b8",
+                    "#3b82f6",
+                    "#f59e0b",
+                    "#ef4444",
+                    "#22c55e"
+                ],
+                borderColor: "#ffffff",
+                borderWidth: 4,
+                hoverOffset: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: "68%",
+            plugins: {
+                legend: {
+                    position: "bottom",
+                    labels: {
+                        usePointStyle: true,
+                        padding: 18
+                    }
+                }
+            }
+        }
+    });
+})();
+</script>
+{% endif %}
+</body>
+</html>

@@ -1,0 +1,140 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Tracker | AI Resume Matcher</title>
+    <link rel="stylesheet" href="{% static 'matcher/style.css' %}">
+</head>
+<body>
+<header class="navbar">
+    <a class="brand" href="{% url 'home' %}">AI Resume Matcher</a>
+    <nav class="nav-links">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a class="active" href="{% url 'job_applications' %}">Job Tracker</a>
+        <a href="{% url 'history' %}">Resume History</a>
+        <a href="{% url 'compare_jobs' %}">Compare Jobs</a>
+        <form method="post" action="{% url 'logout' %}" class="nav-form">
+            {% csrf_token %}
+            <button type="submit" class="btn-danger">Logout</button>
+        </form>
+    </nav>
+</header>
+
+<main class="container">
+    <section class="page-heading">
+        <div>
+            <p class="eyebrow">ORGANIZE YOUR SEARCH</p>
+            <h1>Job Application Tracker</h1>
+            <p>Save opportunities and track every stage of your job search.</p>
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="section-heading">
+            <div>
+                <h2>Add a Job Application</h2>
+                <p>Enter the job details below.</p>
+            </div>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-error">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="form-grid">
+                {% for field in form %}
+                    <div class="form-field {% if field.name == 'notes' %}form-field-full{% endif %}">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}
+                            <small>{{ field.help_text }}</small>
+                        {% endif %}
+                        {% for error in field.errors %}
+                            <span class="field-error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="form-actions">
+                <button type="submit">Save Application</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="card table-card">
+        <div class="section-heading">
+            <div>
+                <h2>My Applications</h2>
+                <p>All jobs saved to your tracker.</p>
+            </div>
+            <span class="badge">{{ applications|length }} jobs</span>
+        </div>
+
+        {% if applications %}
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Company</th>
+                            <th>Job Title</th>
+                            <th>Status</th>
+                            <th>Applied Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for application in applications %}
+                            <tr>
+                                <td class="company-cell">{{ application.company_name }}</td>
+                                <td>
+                                    {% if application.job_url %}
+                                        <a href="{{ application.job_url }}"
+                                           target="_blank"
+                                           rel="noopener noreferrer">
+                                            {{ application.job_title }}
+                                        </a>
+                                    {% else %}
+                                        {{ application.job_title }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="status-badge status-{{ application.status }}">
+                                        {{ application.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>{{ application.applied_date|date:"d M Y"|default:"—" }}</td>
+                                <td>
+                                    <div class="form-actions">
+                                        <a class="btn btn-secondary"
+                                           href="{% url 'edit_job_application' application.id %}">
+                                            Edit
+                                        </a>
+                                        <a class="btn btn-danger"
+                                           href="{% url 'delete_job_application' application.id %}">
+                                            Delete
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state compact">
+                <span class="empty-icon">＋</span>
+                <h3>No applications added yet</h3>
+                <p>Use the form above to add your first opportunity.</p>
+            </div>
+        {% endif %}
+    </section>
+</main>
+</body>
+</html>

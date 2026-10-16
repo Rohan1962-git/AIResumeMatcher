@@ -1,0 +1,44 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Application | AI Resume Matcher</title>
+    <link rel="stylesheet" href="{% static 'matcher/style.css' %}">
+</head>
+<body>
+<header class="navbar">
+    <a class="brand" href="{% url 'home' %}">AI Resume Matcher</a>
+    <nav class="nav-links">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a class="active" href="{% url 'job_applications' %}">Job Tracker</a>
+        <a href="{% url 'history' %}">Resume History</a>
+        <a href="{% url 'compare_jobs' %}">Compare Jobs</a>
+    </nav>
+</header>
+
+<main class="container">
+    <section class="card confirm-card">
+        <div class="confirm-icon">!</div>
+        <p class="eyebrow">CONFIRM YOUR ACTION</p>
+        <h1>Delete this application?</h1>
+        <p>
+            You are about to delete
+            <strong>{{ application.job_title }}</strong>
+            at <strong>{{ application.company_name }}</strong>.
+        </p>
+        <p>This action cannot be undone.</p>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-actions">
+                <button type="submit" class="btn-danger">Yes, Delete Application</button>
+                <a class="btn btn-secondary" href="{% url 'job_applications' %}">Cancel</a>
+            </div>
+        </form>
+    </section>
+</main>
+</body>
+</html>

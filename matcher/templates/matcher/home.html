@@ -1,0 +1,359 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Matcher | Find Your Career Match</title>
+    <link rel="stylesheet" href="{% static 'matcher/style.css' %}">
+</head>
+<body>
+
+<header class="navbar">
+    <a class="brand" href="{% url 'home' %}">AI Resume Matcher</a>
+    <nav class="nav-links">
+        <a class="active" href="{% url 'home' %}">Home</a>
+        {% if user.is_authenticated %}
+            <a href="{% url 'dashboard' %}">Dashboard</a>
+            <a href="{% url 'job_applications' %}">Job Tracker</a>
+            <a href="{% url 'history' %}">My History</a>
+            <a href="{% url 'compare_jobs' %}">Compare Jobs</a>
+            <span class="nav-welcome">Hi, {{ user.username }}</span>
+            <form method="post" action="{% url 'logout' %}" class="nav-form">
+                {% csrf_token %}
+                <button type="submit" class="btn-danger">Logout</button>
+            </form>
+        {% else %}
+            <a href="{% url 'login' %}">Login</a>
+            <a href="{% url 'register' %}">Register</a>
+        {% endif %}
+    </nav>
+</header>
+
+<main class="container">
+
+    <section class="hero-section">
+        <div class="hero-copy">
+            <p class="eyebrow">YOUR NEXT CAREER MOVE STARTS HERE</p>
+            <h1>Find out how well your resume matches your dream job.</h1>
+            <p>
+                Upload your resume, paste a job description, and get a
+                skills comparison with practical suggestions to improve
+                your application.
+            </p>
+            <div class="hero-points">
+                <span>✓ Resume matching</span>
+                <span>✓ ATS checks</span>
+                <span>✓ Skill suggestions</span>
+            </div>
+        </div>
+
+        <div class="hero-decoration" aria-hidden="true">
+            <div class="hero-document">
+                <div class="document-top"></div>
+                <div class="document-line long"></div>
+                <div class="document-line"></div>
+                <div class="document-line medium"></div>
+                <div class="document-line long"></div>
+                <div class="document-line"></div>
+                <div class="document-score">
+                    <span>Resume Match</span>
+                    <strong>AI</strong>
+                </div>
+            </div>
+            <div class="floating-check">✓</div>
+        </div>
+    </section>
+
+    {% if form.non_field_errors %}
+        <div class="alert alert-error">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <section class="card analyzer-form-card" id="analyze">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">START YOUR ANALYSIS</p>
+                <h2>Analyze Your Resume</h2>
+                <p>Upload a PDF or DOCX file and enter the job requirements.</p>
+            </div>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" class="analyzer-form">
+            {% csrf_token %}
+
+            <div class="form-field">
+                <label for="{{ form.resume.id_for_label }}">
+                    Upload Your Resume
+                </label>
+                {{ form.resume }}
+                {% for error in form.resume.errors %}
+                    <span class="field-error">{{ error }}</span>
+                {% endfor %}
+                <small>Supported formats: PDF and DOCX. Maximum size: 5 MB.</small>
+            </div>
+
+            <div class="form-field">
+                <label for="{{ form.job_description.id_for_label }}">
+                    Job Description
+                </label>
+                {{ form.job_description }}
+                {% for error in form.job_description.errors %}
+                    <span class="field-error">{{ error }}</span>
+                {% endfor %}
+                <small>Paste the responsibilities, requirements, and skills from the job advertisement.</small>
+            </div>
+
+            <button type="submit">Analyze Resume →</button>
+        </form>
+    </section>
+
+    {% if result and analysis %}
+    <section class="card analysis-card">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">YOUR RESULTS</p>
+                <h2>Resume Analysis</h2>
+                <p>Review your match score and discover areas for improvement.</p>
+            </div>
+            <span class="result-pill">Analysis complete</span>
+        </div>
+
+        <div class="score-overview">
+            <div>
+                <p class="muted">Overall Match Score</p>
+                <div class="large-score">{{ result.score }}<span>%</span></div>
+                <p class="muted">Based on recognized skills in the job description.</p>
+            </div>
+            <div>
+                <div class="score-bar score-bar-large">
+                    <div class="score-fill"
+                         style="width: {% if result.score > 100 %}100{% else %}{{ result.score }}{% endif %}%;">
+                    </div>
+                </div>
+                <p>Use the missing-skills section to identify areas you may want to improve.</p>
+            </div>
+        </div>
+
+        <section class="analysis-section">
+            <h2>Matching Skills</h2>
+            <p>Skills found in both your resume and the job requirements.</p>
+            {% if result.matched_skills %}
+                <ul class="skill-list">
+                    {% for skill in result.matched_skills %}
+                        <li>{{ skill }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No matching skills were identified.</p>
+            {% endif %}
+        </section>
+
+        <section class="analysis-section">
+            <h2>Skills to Develop</h2>
+            <p>These job-description skills were not recognized in your resume.</p>
+            {% if result.missing_skills %}
+                <ul class="skill-list missing-list">
+                    {% for skill in result.missing_skills %}
+                        <li>{{ skill }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No missing supported skills were found.</p>
+            {% endif %}
+        </section>
+
+        <section class="analysis-section">
+            <h2>Recommended Job Roles</h2>
+            <p>Potential roles suggested based on the skills in your resume.</p>
+
+            <div class="recommendation-grid">
+                {% for job in result.job_recommendations %}
+                    <article class="recommendation-card">
+                        <h3>{{ job.title }}</h3>
+                        <p>{{ job.description }}</p>
+
+                        <div class="recommendation-score">
+                            <strong>{{ job.score }}%</strong>
+                            <span>Skill match</span>
+                        </div>
+
+                        <div class="score-bar">
+                            <div class="score-fill"
+                                 style="width: {% if job.score > 100 %}100{% else %}{{ job.score }}{% endif %}%;">
+                            </div>
+                        </div>
+
+                        <h4>Matching Skills</h4>
+                        {% if job.matched_skills %}
+                            <ul class="skill-list">
+                                {% for skill in job.matched_skills %}
+                                    <li>{{ skill|title }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>No matching skills found.</p>
+                        {% endif %}
+
+                        {% if job.missing_skills %}
+                            <h4>Skills to Learn</h4>
+                            <ul class="skill-list missing-list">
+                                {% for skill in job.missing_skills %}
+                                    <li>{{ skill|title }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </article>
+                {% empty %}
+                    <p>No job recommendations are available.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="analysis-section">
+            <h2>Resume Quality Checker</h2>
+            <p>Review the resume sections recognized by the analyzer.</p>
+
+            <article class="subtle-panel">
+                <div class="inline-score">
+                    <strong>{{ result.resume_quality.quality_score }}%</strong>
+                    <span>Resume quality score</span>
+                </div>
+
+                <div class="score-bar">
+                    <div class="score-fill"
+                         style="width: {% if result.resume_quality.quality_score > 100 %}100{% else %}{{ result.resume_quality.quality_score }}{% endif %}%;">
+                    </div>
+                </div>
+
+                <h3>Sections Found</h3>
+                {% if result.resume_quality.found_sections %}
+                    <ul class="skill-list">
+                        {% for section in result.resume_quality.found_sections %}
+                            <li>{{ section }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No recognized sections were found.</p>
+                {% endif %}
+
+                <h3>Sections to Consider Adding</h3>
+                {% if result.resume_quality.missing_sections %}
+                    <ul class="skill-list missing-list">
+                        {% for section in result.resume_quality.missing_sections %}
+                            <li>{{ section }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>All checked sections were detected.</p>
+                {% endif %}
+
+                <h3>Improvement Suggestions</h3>
+                <ul class="plain-list">
+                    {% for suggestion in result.resume_quality.quality_suggestions %}
+                        <li>{{ suggestion }}</li>
+                    {% empty %}
+                        <li>No additional suggestions are available.</li>
+                    {% endfor %}
+                </ul>
+            </article>
+        </section>
+
+        <section class="analysis-section">
+            <h2>Personalized Improvement Plan</h2>
+            <p>Suggestions based on skills that may be missing from your resume.</p>
+
+            {% if result.suggestions %}
+                {% for item in result.suggestions %}
+                    <article class="recommendation-card">
+                        <h3>{{ item.skill|title }}</h3>
+                        <p>{{ item.suggestion }}</p>
+                    </article>
+                {% endfor %}
+            {% else %}
+                <p>No personalized suggestions are available.</p>
+            {% endif %}
+        </section>
+
+        <section class="analysis-section">
+            <h2>ATS Resume Checker</h2>
+            <p>These checks estimate how well your resume covers standard sections and job keywords.</p>
+
+            <div class="inline-score">
+                <strong>{{ result.ats_report.ats_score }}/100</strong>
+                <span>Estimated ATS score</span>
+            </div>
+
+            <div class="score-bar">
+                <div class="score-fill"
+                     style="width: {% if result.ats_report.ats_score > 100 %}100{% else %}{{ result.ats_report.ats_score }}{% endif %}%;">
+                </div>
+            </div>
+
+            <div class="ats-facts">
+                <div>
+                    <span>Email detected</span>
+                    <strong>{{ result.ats_report.email_found|yesno:"Yes,No" }}</strong>
+                </div>
+                <div>
+                    <span>Phone detected</span>
+                    <strong>{{ result.ats_report.phone_found|yesno:"Yes,No" }}</strong>
+                </div>
+            </div>
+
+            <h3>Resume Sections Found</h3>
+            {% if result.ats_report.found_sections %}
+                <ul class="plain-list">
+                    {% for section in result.ats_report.found_sections %}
+                        <li>{{ section }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No standard resume sections were detected.</p>
+            {% endif %}
+
+            <h3>Sections to Add or Improve</h3>
+            {% if result.ats_report.missing_sections %}
+                <ul class="plain-list">
+                    {% for section in result.ats_report.missing_sections %}
+                        <li>{{ section }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>All checked sections were detected.</p>
+            {% endif %}
+
+            <h3>Job Keywords Found</h3>
+            <p>{{ result.ats_report.matched_keywords|join:", "|default:"No matching keywords listed." }}</p>
+
+            <h3>Missing Job Keywords</h3>
+            <p>{{ result.ats_report.missing_keywords|join:", "|default:"No missing keywords listed." }}</p>
+        </section>
+
+        <div class="report-actions">
+            <a class="btn" href="{% url 'download_pdf_report' analysis.id %}">
+                Download PDF Report
+            </a>
+            <a class="btn btn-secondary" href="{% url 'download_report' analysis.id %}">
+                Download TXT Report
+            </a>
+            {% if user.is_authenticated %}
+                <a class="btn btn-secondary" href="{% url 'history' %}">
+                    View Resume History
+                </a>
+            {% endif %}
+        </div>
+
+        <p class="disclaimer">
+            Scores are estimates based on the analyzer's recognized skills and checks.
+            They do not guarantee ATS performance or hiring outcomes.
+        </p>
+    </section>
+    {% endif %}
+</main>
+
+<footer class="site-footer">
+    AI Resume Matcher <span>•</span> Resume Analysis Workspace
+</footer>
+</body>
+</html>

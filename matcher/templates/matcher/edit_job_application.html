@@ -1,0 +1,30 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Job Application</title>
+</head>
+<body>
+    <h1>Edit Job Application</h1>
+
+    <p>
+        Update details for {{ application.job_title }}
+        at {{ application.company_name }}.
+    </p>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <button type="submit">Save Changes</button>
+    </form>
+
+    <p>
+        <a href="{% url 'job_applications' %}">
+            Back to Job Applications
+        </a>
+    </p>
+</body>
+</html>

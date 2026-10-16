@@ -1,0 +1,63 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | AI Resume Matcher</title>
+    <link rel="stylesheet" href="{% static 'matcher/style.css' %}">
+</head>
+<body class="auth-page">
+<header class="navbar">
+    <a class="brand" href="{% url 'home' %}">AI Resume Matcher</a>
+    <nav class="nav-links">
+        <a href="{% url 'home' %}">Home</a>
+        <a href="{% url 'register' %}">Create Account</a>
+    </nav>
+</header>
+
+<main class="auth-container">
+    <section class="auth-intro">
+        <p class="eyebrow">WELCOME BACK</p>
+        <h1>Your next opportunity starts here.</h1>
+        <p>Sign in to review your resume analyses, compare job descriptions, and manage your applications in one place.</p>
+        <div class="auth-feature">✓ Keep your job search organized</div>
+        <div class="auth-feature">✓ Review previous resume reports</div>
+        <div class="auth-feature">✓ Track applications and interviews</div>
+    </section>
+
+    <section class="card auth-card">
+        <h2>Sign in</h2>
+        <p>Enter your account details to continue.</p>
+
+        <form method="post">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-error">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            {% for field in form %}
+                <div class="form-field">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}
+                        <span class="field-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+
+            <button type="submit" class="auth-submit">Login</button>
+        </form>
+
+        <p class="auth-switch">
+            Don't have an account?
+            <a href="{% url 'register' %}">Create one</a>
+        </p>
+    </section>
+</main>
+
+<footer class="site-footer">AI Resume Matcher <span>•</span> Your job search workspace</footer>
+</body>
+</html>
