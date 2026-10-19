@@ -45,3 +45,4 @@ urllib3==2.5.0
 websockets==16.0
 yagmail==0.15.293
 yarl==1.22.0
+psycopg[binary]
